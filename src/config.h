@@ -58,6 +58,7 @@ struct Config {
     float moveWalk = 1.0f;          // walking / running speed outside the aim (0.5..2)
     float moveRun = 1.0f;
     bool noColorFilter = false;     // remove the yellow area colour grade
+    int fpsLimit = 144;             // 0 = original limiter, or 30..1000
     bool coopSync = true;           // keep the co-op partner's view in step (extra heartbeats, leg clip)
     unsigned hookDelayMs = 3000;      // wait this long after the game window appears before hooking the game
     // keyboard/mouse
@@ -67,6 +68,13 @@ struct Config {
     float mouseVertical = 1.0f;     // vertical mouse speed relative to horizontal
     bool mouseAimRE3 = true;        // aim with the crosshair in the centre (the game's mouse-look aim style)
     int mouseSwitchCounts = 30;     // mouse counts that switch a pad player to keyboard/mouse (0 = the game's)
+    bool mouseWheelWeapons = true;  // cycle guns by inventory slot; scopes keep their original zoom
+    // Optional trainer-style settings. All default off and are intended for solo/offline play.
+    bool infiniteHealth = false;          // refill the active local player's HP while alive
+    bool partnerInfiniteHealth = false;   // refill local AI / split-screen partner HP while alive
+    bool infiniteAmmo = false;            // do not consume reserve ammunition on reload
+    bool noReload = false;                // do not consume rounds from the current magazine
+    bool infiniteGrenades = false;        // do not consume grenade inventory stacks
 };
 
 const Config& Cfg();

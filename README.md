@@ -1,4 +1,43 @@
-# RE3Controls v1.9 for Resident Evil 5: source code
+# RE5 Control Plus
+
+Community extension of **RE3Controls v1.9** for Resident Evil 5 Gold Edition
+(Steam 1.2.0, 32-bit `re5dx9.exe`). Formerly called RE5Plus.
+This is an independent fork, not an official upstream release.
+
+Project: https://github.com/tfz96/RE5-Control-Plus
+Downloads: https://github.com/tfz96/RE5-Control-Plus/releases
+
+**Current release candidate: 1.9.4-beta.1.**
+Retains the legacy `xinput1_3.dll` and `RE3Controls.ini` filenames for upgrades.
+See [English installation and configuration](docs/README_EN.md),
+[中文安装与配置](docs/README_RE5Plus_ZH.md),
+[完整中文参数表](docs/RE3Controls_完整中文说明.md),
+[credits and licenses](THIRD_PARTY_NOTICES.md), and [changelog](CHANGELOG.md).
+
+This fork retains RE3Controls' FOV and area colour-filter implementation and adds a 144 FPS option based on
+Lyall's MIT-licensed RE5Fix. Shadow quality stays under the game's control. See
+[the Chinese guide](docs/README_RE5Plus_ZH.md) for installation, settings and validation limits.
+The packaged profile enables the existing colour-filter removal, +15/+10 degrees FOV, and 144 FPS.
+It also adds mouse-wheel gun cycling in visible inventory order using the game's native equip request.
+RE5Plus.2 fixes RE5Plus.1 incorrectly routing wheel requests through the give-to-partner command.
+Upgrade by replacing only the DLL; keep your existing INI.
+`[Keyboard] MouseWheelWeapons=0` disables it. Scopes retain zoom; inventory and special actions discard scrolling.
+The FPS hook validates a unique executable-code signature and joins the existing MinHook installation.
+`[Performance] FPSLimit=0` restores the original limiter; the default is 144.
+
+RE5Plus.3 adds configuration-only, default-off trainer-style settings for local/offline use: player and local-partner
+health, reserve ammunition, magazine rounds and grenade stacks. They are enabled
+only after the exact Steam 1.2.0 instruction bytes validate at runtime. There are no hotkeys and the mod does not launch
+or require an external trainer. See `[Trainer]` in `RE3Controls.ini`.
+
+PowerShell builds: `./build.ps1 -Zig <zig.exe> -Mode release`; tests: `-Mode test`; package: `./package.ps1`.
+RE5Fix attribution and license are in `LICENSE-RE5Fix.txt`. This repository has no pnpm package or CI workflow;
+its checks are the native C++ tests (FPS and wheel hooks), the DLL build and `git diff --check`.
+
+The upstream README below describes the original v1.9 release. Its original binary hash and version metadata
+do not apply to this fork. The FPS feature scans executable sections instead of using a fixed address.
+
+# RE3Controls v1.9 for Resident Evil 5: upstream source code
 
 RE3Controls is a Resident Evil 5 mod that brings in Resident Evil 3 (2020) style controls: a free over-the-shoulder
 camera, camera-relative movement, walking while aiming, a centred crosshair, one-button reload on the move, quick

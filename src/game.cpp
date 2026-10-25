@@ -14,8 +14,10 @@
 #include "damage.h"
 #include "melee.h"
 #include "balance.h"
+#include "enhancements.h"
 #include "inventory.h"
 #include "kbinput.h"
+#include "trainer.h"
 #include <d3d9.h>
 #include <math.h>
 #include "MinHook.h"
@@ -1104,6 +1106,10 @@ static void __fastcall HookPlayerPadUpdate(uint32_t self, void* edx) {
     } lock;
     PollConfig();
     UpdateColorFilter();
+    UpdateEnhancementSettings();
+    // Trainer settings must not depend on a gamepad. Keyboard/mouse players can
+    // have PlayerPad mode 0/2, while code patches and HP scanning still apply.
+    TrainerTick();
     uint32_t character = 0;
     if (IsLocalPlayerPad(self, &character)) {
         InventoryPadUpdated(self);
@@ -1196,6 +1202,7 @@ void InitGameHooks() {
     InitMeleeHooks();
     InitBalanceHooks();
     InitKeyboardHooks();
+    InitEnhancementHooks();
     static const BYTE sigPad[] = {0x83, 0xEC, 0x28, 0x0F, 0x57, 0xC0, 0x53, 0x56, 0x8B, 0xF1};
     bool ok = HookAt(kFnPlayerPadUpdate, sigPad, sizeof(sigPad), (void*)HookPlayerPadUpdate,
                      (void**)&oPlayerPadUpdate, "PlayerPad::Update");

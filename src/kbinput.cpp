@@ -32,6 +32,7 @@
 #include "re5.h"
 #include "config.h"
 #include "kbinput.h"
+#include "wheel_core.h"
 #include <math.h>
 #include "MinHook.h"
 
@@ -57,6 +58,11 @@ typedef void(__fastcall* PFN_Switch)(uint32_t spad, void* edx);
 PFN_Key oKeyOn = nullptr, oKeyTrg = nullptr;
 PFN_AimStyle oAimStyle = nullptr;
 PFN_Switch oSwitch = nullptr;
+typedef uint32_t(__fastcall* PFN_WheelQuery)(uint32_t grid, void* edx, uint32_t character, uint32_t pad);
+PFN_WheelQuery oWheelQuery = nullptr;
+uint32_t g_wheelReturn = wheel::kReturn;
+volatile LONG g_wheelDelta = 0;  // reset by the device update every frame, consumed once by its keyboard owner
+wheel::Cooldown g_wheelCooldown;
 
 // Character-code key reads that drive the character (call site + 5 = return address), with the action they read.
 struct Site { uint32_t call; int action; };
@@ -103,7 +109,7 @@ bool g_invWalk[4] = {};
 bool g_keyAimWalk[4] = {};  // WASD walk in the aim this frame (the game's key aim is off)
 bool g_orbit[4] = {};       // the free camera owns the view (the game's look keys are off)
 
-uint32_t Rd(uint32_t a) { return Readable((void*)a, 4) ? *(uint32_t*)a : 0; }
+uint32_t Rd(uint32_t a) { return Readable((void*)a, 4) ? At<uint32_t>(a, 0) : 0; }
 
 uint32_t SPad() { return Rd(kSPadPtr); }
 
@@ -161,11 +167,18 @@ double g_motion = 0;  // raw mouse counts, decaying over ~0.25 s
 LARGE_INTEGER g_lastSwitch = {};
 
 void __fastcall HookDeviceSwitch(uint32_t spad, void* edx) {
+    InterlockedExchange(&g_wheelDelta, 0);
     const uint8_t before = Readable((void*)(spad + 0x5F0), 1) ? At<uint8_t>(spad, 0x5F0) : 1;
     oSwitch(spad, edx);
     const Config& c = Cfg();
     const uint32_t mouse = Rd(kMousePtr), kb = Rd(kKeyboardPtr);
     if (!mouse || !kb || !Readable((void*)(mouse + 0x20), 0x80) || !Readable((void*)(kb + 0x160), 0x20)) return;
+    if (c.enabled && c.keyboardMouse && c.mouseWheelWeapons && !c.meleeOnly &&
+        Readable((void*)spad, 0x620) && !At<uint8_t>(spad, spad::InputLocked) &&
+        !At<uint8_t>(spad, spad::DeviceIsPad) && At<uint8_t>(spad, 0x610) && !JustActivated()) {
+        const int delta = At<int32_t>(mouse, 0x34);
+        InterlockedExchange(&g_wheelDelta, delta < 0 ? -1 : delta > 0 ? 1 : 0);
+    }
     LARGE_INTEGER f, now;
     QueryPerformanceFrequency(&f);
     QueryPerformanceCounter(&now);
@@ -197,6 +210,56 @@ void __fastcall HookDeviceSwitch(uint32_t spad, void* edx) {
     if (pad && !key && !click && !wheel && (locked || g_motion < c.mouseSwitchCounts)) At<uint8_t>(spad, 0x5F0) = 1;
 }
 
+uint32_t WheelItem(uint32_t inventory) {
+    if (inventory < wheel::kInventory) return 0;
+    const uint32_t character = inventory - wheel::kInventory;
+    if (!KbLayerFor(character)) return 0;
+    const int delta = InterlockedExchange(&g_wheelDelta, 0);
+    if (!delta) return 0;
+    const Config& c = Cfg();
+    const uint32_t spad = SPad();
+    if (!c.mouseWheelWeapons || c.meleeOnly || !spad || !Readable((void*)spad, 0x620) ||
+        At<uint8_t>(spad, spad::InputLocked) || !At<uint8_t>(spad, 0x610) ||
+        JustActivated() || SceneCursor() || At<int16_t>(character, ch::Hp) <= 0 ||
+        At<uint8_t>(character, ch::Scope)) return 0;
+    const uint32_t grid = Rd(character + 0x2654), action = Rd(character + ch::CurAction);
+    const uint32_t flags = At<uint32_t>(character, ch::Flags) & 7;
+    const uint32_t ride = At<uint32_t>(character, 0x2D8C);
+    if ((flags != 1 && flags != 2) || !Readable((void*)grid, 0x80) ||
+        At<uint8_t>(grid, 0x68) || At<uint32_t>(grid, 0x58) != 0xD ||
+        At<uint32_t>(grid, 0x5C) != 0xD || At<uint32_t>(grid, 0x60) != 0xD ||
+        At<uint32_t>(grid, 0x64) != 0xD ||
+        ((ride & 0x4000) && (ride & 0xE0)) ||
+        At<float>(character, 0x265C) > 0.0f ||
+        (At<uint32_t>(character, 0x2D7C) & 0x80000000) || At<int8_t>(character, 0x1BCC) > 0 ||
+        !wheel::Stance(Rd(action), At<uint32_t>(character, ch::ActionId))) return 0;
+    const DWORD now = GetTickCount();
+    if (!g_wheelCooldown.Ready(character, now) || !Readable((void*)inventory, 4 + 24 * 0x30)) return 0;
+    wheel::Item items[24] = {};
+    for (int i = 0; i < 24; ++i) {
+        const uint32_t entry = inventory + 4 + i * 0x30;
+        if (At<uint8_t>(entry, 0x29) != 1) continue;
+        const uint32_t id = At<uint32_t>(entry, 4);
+        const uint32_t group = Rd(0x011B5170 + (id & 0xFF) * 0x140 + 0xB8);
+        items[i] = {entry, At<uint32_t>(entry, 0x18), At<uint32_t>(entry, 0x1C) == 1, wheel::Gun(id, group)};
+    }
+    const uint32_t selected = wheel::Select(items, 24, delta);
+    if (selected) g_wheelCooldown.Commit(character, now);
+    return selected;
+}
+
+uint32_t __fastcall HookWheelQuery(uint32_t grid, void* edx, uint32_t character, uint32_t pad) {
+    const uint32_t original = oWheelQuery(grid, edx, character, pad);
+    if ((uint32_t)(uintptr_t)__builtin_return_address(0) != g_wheelReturn ||
+        !Readable((void*)character, 0x3000) || Rd(character + 0x2654) != grid) return original;
+    if (original != 0xD) {
+        if (KbLayerFor(character)) InterlockedExchange(&g_wheelDelta, 0);
+        return original;
+    }
+    const uint32_t selected = WheelItem(character + wheel::kInventory);
+    return selected ? At<uint32_t>(selected, 0x18) : 0xD;
+}
+
 bool HookAt(uint32_t addr, const BYTE* sig, size_t n, void* detour, void** orig, const char* name) {
     if (!SafeEqual((void*)addr, sig, n) || MH_CreateHook((void*)addr, detour, orig) != MH_OK ||
         MH_QueueEnableHook((void*)addr) != MH_OK) {
@@ -204,6 +267,17 @@ bool HookAt(uint32_t addr, const BYTE* sig, size_t n, void* detour, void** orig,
         return false;
     }
     return true;
+}
+
+bool InitWheelHook(bool deviceReady, uint32_t query = wheel::kQuery, uint32_t builder = wheel::kBuilder) {
+    const bool ready = deviceReady &&
+        SafeEqual((void*)builder, wheel::kBuilderBytes, sizeof(wheel::kBuilderBytes)) &&
+        builder + 23 + At<int32_t>(builder, 19) == query &&
+        HookAt(query, wheel::kQueryBytes, sizeof(wheel::kQueryBytes),
+               (void*)HookWheelQuery, (void**)&oWheelQuery, "wheel item query");
+    if (ready) g_wheelReturn = builder + wheel::kReturn - wheel::kBuilder;
+    Log("RE5Plus mouse wheel weapons: %s", ready ? "validated hook" : "feature unavailable");
+    return ready;
 }
 
 int CollectSites(const Site* sites, int n, uint32_t fn, uint32_t* out) {
@@ -318,6 +392,7 @@ void InitKeyboardHooks() {
     const bool s = HookAt(kFnAimStyle, sigStyle, sizeof(sigStyle), (void*)HookAimStyle, (void**)&oAimStyle, "aim style");
     const bool d = HookAt(kFnDeviceSwitch, sigSwitch, sizeof(sigSwitch), (void*)HookDeviceSwitch, (void**)&oSwitch,
                           "device switch");
+    InitWheelHook(d);
     Log("keyboard: key reads %s (%d/%d sites), aim style %s, device switch %s", a && b ? "hooked" : "FAILED",
         g_heldCount + g_lookCount + g_keyAimCount + g_pressCount + g_invHeldCount + g_invPressCount,
         (int)(sizeof(kHeldSites) / sizeof(kHeldSites[0]) + sizeof(kLookSites) / sizeof(kLookSites[0]) +

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "config.h"
+#include "enhancements_core.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -199,6 +200,20 @@ static const char kDefaultIni[] =
     "; strong at range); all shotguns of all players; in co-op the host's value is used\r\n"
     "ShotgunSpread=1.0\r\n"
     "\r\n"
+    "[Trainer]\r\n"
+    "; Optional solo/offline trainer-style settings. They are all off by default, have no hotkeys, and reload from\r\n"
+    "; this ini while the game is running. Use in solo/private co-op; normal saves can retain resulting inventory values.\r\n"
+    "; 1 = refill the current local character's HP while alive. It does not revive a dead or critically injured character.\r\n"
+    "InfiniteHealth=0\r\n"
+    "; 1 = also refill local AI or split-screen partner HP while alive. Remote network-player replicas are never changed.\r\n"
+    "PartnerInfiniteHealth=0\r\n"
+    "; 1 = preserve reserve ammunition when the game reloads. Keep NoReload=0 to retain normal reload animations.\r\n"
+    "InfiniteAmmo=0\r\n"
+    "; 1 = preserve rounds in the active weapon's magazine, so a normal reload is no longer needed.\r\n"
+    "NoReload=0\r\n"
+    "; 1 = preserve grenade stack counts when throwing. Proximity bombs and eggs are not included.\r\n"
+    "InfiniteGrenades=0\r\n"
+    "\r\n"
     "[Movement]\r\n"
     "; walking and running speed outside the aim: 1.0 = the original game (0.5 to 2); the walking speed while\r\n"
     "; aiming is WalkSpeed / FastWalkSpeed in [Aim]\r\n"
@@ -208,6 +223,12 @@ static const char kDefaultIni[] =
     "[Visual]\r\n"
     "; 1 = remove the yellow colour tint of the levels (the game's own Special Settings filters still work)\r\n"
     "NoColorFilter=0\r\n"
+    "\r\n"
+    "[Performance]\r\n"
+    "; 0 = original limiter; otherwise a limit from 30 to 1000. Default: 144.\r\n"
+    "; Set the in-game frame rate to Variable. VSync/external limiters can still cap FPS.\r\n"
+    "; Values above 120 require gameplay/co-op testing.\r\n"
+    "FPSLimit=144\r\n"
     "\r\n"
     "[Advanced]\r\n"
     "; milliseconds the mod waits after the game window appears before it hooks the game (raise it if the game\r\n"
@@ -234,6 +255,9 @@ static const char kDefaultIni[] =
     "; a gamepad player who touches the mouse switches to keyboard/mouse only after this many mouse counts within\r\n"
     "; about a quarter of a second (0 = the game's own rule: any movement). Keys and mouse buttons switch at once\r\n"
     "MouseSwitchCounts=30\r\n"
+    "; wheel down/up selects the next/previous gun in grid order; scopes retain zoom.\r\n"
+    "; Menus, inventory, reloads and special actions discard scroll input. 0 = disable.\r\n"
+    "MouseWheelWeapons=1\r\n"
     "\r\n"
     "[Coop]\r\n"
     "; Extra position updates so the partner sees free-camera turns and walking while aiming\r\n"
@@ -401,9 +425,20 @@ void LoadConfig() {
     }
     c.moveWalk = GetScale(path, "Movement", "MoveWalkSpeed", 0.5f, 2.0f);
     c.moveRun = GetScale(path, "Movement", "MoveRunSpeed", 0.5f, 2.0f);
+    c.infiniteHealth = GetBool(path, "Trainer", "InfiniteHealth", c.infiniteHealth);
+    c.partnerInfiniteHealth = GetBool(path, "Trainer", "PartnerInfiniteHealth", c.partnerInfiniteHealth);
+    c.infiniteAmmo = GetBool(path, "Trainer", "InfiniteAmmo", c.infiniteAmmo);
+    c.noReload = GetBool(path, "Trainer", "NoReload", c.noReload);
+    c.infiniteGrenades = GetBool(path, "Trainer", "InfiniteGrenades", c.infiniteGrenades);
     c.noColorFilter = GetBool(path, "Visual", "NoColorFilter", c.noColorFilter);
+    {
+        char buf[64];
+        GetPrivateProfileStringA("Performance", "FPSLimit", "144", buf, sizeof(buf), path);
+        c.fpsLimit = enhancements::FpsLimit(enhancements::ParseSetting(buf, 0));
+    }
     c.coopSync = GetBool(path, "Coop", "Sync", c.coopSync);
     c.keyboardMouse = GetBool(path, "Keyboard", "KeyboardMouse", c.keyboardMouse);
+    c.mouseWheelWeapons = GetBool(path, "Keyboard", "MouseWheelWeapons", c.mouseWheelWeapons);
     char kbRun[32];
     GetPrivateProfileStringA("Keyboard", "Run", "Hold", kbRun, sizeof(kbRun), path);
     c.kbRunMode = !_stricmp(kbRun, "Toggle") ? RunMode::Toggle : RunMode::Hold;
@@ -443,18 +478,22 @@ void LoadConfig() {
         c.knifeDamage = 1.0f;
         c.fireRate = c.moveWalk = c.moveRun = 1.0f;
         c.shotgunSpread = 1.0f;
+        c.infiniteHealth = c.partnerInfiniteHealth = false;
+        c.infiniteAmmo = c.noReload = c.infiniteGrenades = false;
         c.aimDistance = c.fieldOfView = c.aimFieldOfView = 0.0f;
         Log("config: Mode=MeleeCamera (everything else as in the original game)");
     }
     g_cfg = c;
     Log("config: remap=%d run=%s/%s reload=%d quickturn=%d invmove=%d freecam=%d (%.0f/%.0f) aimwalk=%d (%.2f/%.2f) crosshair=%d (%.2f) "
         "aimspeed=%.2f/%.2f aimlag=%.2f fire=%.2f spread=%.2f move=%.2f/%.2f nofilter=%d sync=%d kbm=%d (%s, %.2f/%.2f, %s, %d) "
-        "dash=%d clicks=%d knifeaim=%d coverturn=%d backstep=%d aimdist=%.0f fov=%+.0f/%+.0f grabcam=%d scopewalk=%d interact=%s",
+        "dash=%d clicks=%d knifeaim=%d coverturn=%d backstep=%d aimdist=%.0f fov=%+.0f/%+.0f grabcam=%d scopewalk=%d interact=%s "
+        "trainer=hp%d partner%d ammo%d noreload%d grenade%d",
         c.remapButtons, run, c.runButton == RunButton::RB ? "RB" : "L3", c.oneButtonReload, c.quickTurn, c.inventoryMove, c.freeCamera, c.cameraSpeed, c.cameraPitchSpeed,
         c.gunWalk + c.knifeWalk * 2 + c.reloadWalk * 4 + c.switchWalk * 8, c.aimWalkAnimSpeed, c.aimWalkFastSpeed,
         c.crosshair, c.crosshairSize, c.aimSpeedX, c.aimSpeedY, c.aimCameraLag, c.fireRate, c.shotgunSpread, c.moveWalk, c.moveRun, c.noColorFilter,
         c.coopSync, c.keyboardMouse, c.kbRunMode == RunMode::Hold ? "hold" : "toggle", c.mouseSensitivity,
         c.mouseVertical, c.mouseAimRE3 ? "RE3" : "game", c.mouseSwitchCounts, c.weskerDash, c.stickClicks, c.knifeFromAim,
         c.coverTurn, c.backStep, c.aimDistance, c.fieldOfView, c.aimFieldOfView, c.grabCamera, c.scopeWalk,
-        c.interactX ? "X" : "A");
+        c.interactX ? "X" : "A", c.infiniteHealth, c.partnerInfiniteHealth, c.infiniteAmmo, c.noReload,
+        c.infiniteGrenades);
 }
