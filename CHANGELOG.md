@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.9.4
+
+- Publish the first regular release as RE5 Control Plus 1.9.4.
+- Provide English and Chinese comments for every INI setting.
+- Generate missing INI files from the same bilingual release preset.
+- Rewrite the bilingual README to distinguish new features from upstream features.
+- Credit tfz96's direction/testing and OpenAI Codex's AI-assisted implementation, fixes, documentation and builds.
+- Reduce the installation archive to DLL, INI and one bilingual README with complete license texts.
+- Preserve gameplay settings and default-off helpers from 1.9.4-beta.1.
+- 发布正式版；新增逐项中英双语配置，精简三文件安装包，并保留完整署名与许可。
+
 ## 1.9.4-beta.1
 
 - Rename the community fork from RE5Plus to RE5 Control Plus.

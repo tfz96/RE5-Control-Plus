@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Push-Location $PSScriptRoot
 try {
+    & "$PSScriptRoot/tools/update-default-ini.ps1" -Check
     New-Item -ItemType Directory -Force build,build/dev | Out-Null
     $mh = 'third_party/minhook'
     foreach ($unit in @('hook', 'buffer', 'trampoline', 'hde/hde32')) {
@@ -16,8 +17,10 @@ try {
                '-fno-rtti', "-I$mh/include", '-Isrc')
     $objects = @(Get-ChildItem build/mh_*.o | ForEach-Object FullName)
     if ($Mode -eq 'test') {
-        foreach ($test in @('enhancements', 'wheel', 'trainer')) {
-            & $Zig c++ @flags -UNDEBUG "tests/${test}_test.cpp" @objects -o "build/${test}_test.exe" -luser32 -lkernel32
+        foreach ($test in @('enhancements', 'wheel', 'trainer', 'config')) {
+            $testSources = @("tests/${test}_test.cpp")
+            if ($test -eq 'config') { $testSources += 'src/config.cpp' }
+            & $Zig c++ @flags -UNDEBUG @testSources @objects -o "build/${test}_test.exe" -luser32 -lkernel32
             if ($LASTEXITCODE) { throw "Test compilation failed: $test" }
             & "./build/${test}_test.exe"
             if ($LASTEXITCODE) { throw "Tests failed: $test" }

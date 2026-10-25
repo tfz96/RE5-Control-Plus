@@ -2,7 +2,7 @@ RE5 Control Plus - Based on RE3Controls
 
 Resident Evil 5 Gold Edition (Steam 1.2.0, 32-bit re5dx9.exe).
 Independent community fork of RE3Controls v1.9, formerly RE5Plus.
-Version: 1.9.4-beta.1.
+Version: 1.9.4.
 Source: https://github.com/tfz96/RE5-Control-Plus
 Releases: https://github.com/tfz96/RE5-Control-Plus/releases
 
@@ -11,7 +11,8 @@ Retains RE3Controls free camera and controls, movement while aiming/reloading,
 FOV adjustment and yellow-filter removal.
 Adds configurable FPS limiting (packaged at 144 FPS), mouse-wheel gun cycling,
 and optional health/ammo/no-reload/grenade helpers. Trainer options default OFF.
-Includes a Chinese-commented INI, a full Chinese configuration guide and English instructions.
+Includes an English/Chinese-commented INI and bilingual README.
+The installation archive contains only the DLL, INI and README, with full license texts in the README.
 
 INSTALL
 Close the game. Back up existing xinput1_3.dll and RE3Controls.ini.
@@ -23,8 +24,8 @@ Do not load another RE3Controls DLL or RE5Fix at the same time.
 
 VALIDATION
 The preceding RE5Plus.3 build was used by the owner to complete the main campaign.
-This beta removes an inactive heat option and updates documentation.
-The rebuilt beta has not received a new in-game regression pass.
+Version 1.9.4 is the regular release with bilingual settings and a minimal installation package.
+This build has not received a fresh in-game regression pass.
 A LAN room-discovery issue was reported; its relationship to this mod is unconfirmed.
 Use optional trainer settings in solo play or private co-op with everyone's agreement.
 
@@ -32,7 +33,9 @@ CREDITS AND PERMISSIONS
 RE3Controls: palecvzhope / bananzaza, MIT.
 RE5Fix FPS-limiter reference: Lyall, MIT.
 MinHook 1.3.4: BSD 2-Clause.
-See THIRD_PARTY_NOTICES.md and included licenses for all references.
+tfz96: project direction, requirements, publishing and earlier-build gameplay tests.
+OpenAI Codex (AI coding assistant): assisted code implementation, fixes, tests, bilingual documentation and builds.
+See the packaged README for full notices and license texts.
 Source modifications may be shared under the included applicable licenses;
 preserve copyright and license notices.
 
@@ -40,5 +43,7 @@ preserve copyright and license notices.
 生化危机 5 操控增强版，基于 RE3Controls v1.9 的独立社区衍生版。
 新增 144 FPS 预设、滚轮切枪、配置式生命/弹药/免换弹/手雷辅助功能。
 辅助功能默认关闭，没有快捷键；通过 RE3Controls.ini 调整。
-保留原项目英文配置键名，提供逐项中文注释和完整中文说明。
+保留原项目英文配置键名，提供逐项中英双语注释和完整中文说明。
+安装包仅含 DLL、INI 和一份双语 README，完整署名及许可合并在说明末尾。
+tfz96 负责需求与实测；OpenAI Codex（AI 编程助手）协助代码实现、修复、测试、文档与构建。
 本版不是原作者官方更新；适用 Steam 黄金版 1.2.0 的 32 位 re5dx9.exe。

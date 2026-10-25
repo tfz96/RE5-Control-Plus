@@ -2,7 +2,7 @@
 
 基于 RE3Controls `9d696ec39610a917e24a28ba3c0e829bc6878d83`（2026-10-14）。
 帧率功能参考 RE5Fix `116811f573270d105c992329d870eb2e79750b8d`（2022-08-12）。
-这是社区衍生版本 `1.9.4-beta.1`（原名 RE5Plus），不是上游官方更新。
+这是社区衍生版本 `1.9.4`（原名 RE5Plus），不是上游官方更新。
 DLL 与配置仍使用 `xinput1_3.dll`、`RE3Controls.ini`，兼容旧配置文件。
 
 ## plus2 修复说明
@@ -69,8 +69,8 @@ InfiniteGrenades=0
 
 ## 调整
 
-完整参数解释、默认操作与常用示例见随包 [RE3Controls 完整中文说明](RE3Controls_完整中文说明.md)。
-本包 `RE3Controls.ini` 已逐项添加中文注释，配置键名和数值保持不变。
+完整参数解释、默认操作与常用示例见源码仓库中的 [RE3Controls 完整中文说明](RE3Controls_完整中文说明.md)。
+本包 `RE3Controls.ini` 已逐项添加中英双语注释，配置键名和数值保持不变。
 
 编辑同目录的 `RE3Controls.ini`：
 
@@ -138,4 +138,10 @@ FOV 数字是增加的角度，不是最终角度；设为 0 恢复原始 FOV，
 ```
 
 RE3Controls 与 RE5Fix 均为 MIT 许可；MinHook 为 BSD 2-Clause。
-随包保留三个项目的许可文本。上游英文操作说明见 `README-RE3Controls-upstream.txt`。
+安装包仅保留 DLL、双语 INI 和 README.md；完整许可合并在 README.md 中。
+详细文档与上游英文操作说明保留在源码仓库。
+
+## 构建署名
+
+tfz96 负责项目需求、发布维护及此前版本的游戏实测。
+OpenAI Codex（AI 编程助手）根据需求协助完成代码扩展、修复、测试、双语文档、构建及发布准备。

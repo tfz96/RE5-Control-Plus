@@ -2,6 +2,12 @@
 
 RE5 Control Plus is an independent community fork. Preserve these notices when redistributing.
 
+## Fork Implementation And Build
+
+- tfz96: project direction, requirements, publishing and gameplay tests of preceding RE5Plus builds.
+- OpenAI Codex (AI coding assistant): assisted with fork implementation, fixes, tests, bilingual documentation, builds and release preparation under tfz96's direction.
+- This attribution describes the development process and does not replace upstream authorship or license notices.
+
 ## RE3Controls
 
 - Project: https://github.com/bananzaza/RE3Controls

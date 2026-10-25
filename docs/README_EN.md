@@ -1,6 +1,6 @@
 # RE5 Control Plus
 
-Version 1.9.4-beta.1. Community fork of RE3Controls v1.9, formerly RE5Plus.
+Version 1.9.4. Community fork of RE3Controls v1.9, formerly RE5Plus.
 Target: Resident Evil 5 Gold Edition, Steam 1.2.0, 32-bit re5dx9.exe.
 Not an official RE3Controls or Capcom release.
 
@@ -11,7 +11,7 @@ Not an official RE3Controls or Capcom release.
 - Adds configurable FPS limiting based on RE5Fix's limiter calculation, packaged at 144 FPS.
 - Adds mouse-wheel gun selection in inventory-slot order, preserving scope zoom.
 - Adds optional player/local-partner health refill, reserve ammo preservation, magazine preservation and infinite grenades.
-- Includes a Chinese-commented INI and a complete Chinese configuration guide.
+- Includes an English/Chinese-commented INI and a bilingual README.
 
 All optional trainer settings are disabled in the release profile. They have no hotkeys.
 The unsupported turret-heat option has been removed.
@@ -69,8 +69,8 @@ Use them for solo play or private co-op with everyone's agreement.
 ## Validation And Reports
 
 The owner completed the main campaign using the preceding RE5Plus.3 build and confirmed the ammo feature worked.
-This candidate removes the inactive heat option and updates release documentation.
-It has not yet received a new in-game regression pass.
+Version 1.9.4 is the regular release with bilingual settings and a three-file installation package.
+It has not yet received a fresh in-game regression pass.
 This is not certification of every chapter, weapon, game mode, frame rate or network setup.
 A LAN room-discovery issue was reported; causation is unconfirmed, and Steam invitations worked in that report.
 
@@ -90,3 +90,8 @@ Use Zig 0.13.0 on Windows:
 Tests cover the limiter, wheel command generation and trainer patch-state validation.
 The release build excludes developer-only servers.
 See THIRD_PARTY_NOTICES.md and the included license files for upstream credits.
+
+The installation archive contains only xinput1_3.dll, RE3Controls.ini and README.md.
+Full notices and license texts are consolidated into the packaged README; detailed guides remain in the source repository.
+tfz96 directs and tests the project. OpenAI Codex (AI coding assistant) assisted with code implementation,
+fixes, tests, bilingual documentation, builds and release preparation.
